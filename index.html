@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PGA Matchup Intel — DataGolf SG Tool</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@300;400;500;600;700;800&display=swap');
+
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111418;
+    --surface2: #181c22;
+    --border: #1e2530;
+    --accent: #c8ff00;
+    --accent2: #00c8ff;
+    --red: #ff4444;
+    --orange: #ff8800;
+    --green: #00ff88;
+    --text: #e8eaed;
+    --muted: #5a6272;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Barlow Condensed', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    padding: 24px 32px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .logo span {
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    display: inline-block;
+  }
+  .status-dot.live { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+  .status-dot.error { background: var(--red); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* API KEY SECTION */
+  .api-section {
+    padding: 24px 32px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .api-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  .api-input {
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 14px;
+    flex: 1;
+    min-width: 260px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .api-input:focus { border-color: var(--accent); }
+
+  .btn {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 9px 22px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-primary:hover { background: #d4ff1a; transform: translateY(-1px); }
+  .btn-primary:disabled { background: var(--muted); cursor: not-allowed; transform: none; }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+  }
+  .btn-secondary:hover { background: rgba(0,200,255,0.08); }
+
+  /* CONTROLS */
+  .controls {
+    padding: 20px 32px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .control-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  select {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    outline: none;
+    cursor: pointer;
+  }
+  select:focus { border-color: var(--accent); }
+
+  .search-input {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    outline: none;
+    width: 220px;
+  }
+  .search-input:focus { border-color: var(--accent2); }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    background: var(--surface);
+  }
+
+  .tab {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 14px 20px;
+    cursor: pointer;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* MAIN CONTENT */
+  .main { padding: 28px 32px; }
+
+  /* ERROR / LOADING */
+  .message-box {
+    padding: 40px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .message-box.error { color: var(--red); border-color: var(--red); }
+  .message-box .loading-dots::after {
+    content: '...';
+    animation: dots 1.5s steps(4, end) infinite;
+  }
+  @keyframes dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+  }
+
+  /* SG TABLE */
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--sans);
+    font-size: 14px;
+  }
+
+  thead tr {
+    background: var(--surface2);
+    border-bottom: 2px solid var(--accent);
+  }
+
+  th {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    padding: 12px 14px;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  th:hover { color: var(--text); }
+  th.sorted { color: var(--accent); }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  tbody tr:hover { background: var(--surface2); }
+  tbody tr.highlighted { background: rgba(200, 255, 0, 0.04); border-left: 2px solid var(--accent); }
+
+  td {
+    padding: 11px 14px;
+    white-space: nowrap;
+  }
+
+  .player-name {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    color: var(--text);
+  }
+
+  .player-rank {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .sg-val {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    text-align: right;
+  }
+
+  .sg-bar-cell { width: 80px; padding: 11px 8px; }
+
+  .sg-bar {
+    height: 4px;
+    background: var(--border);
+    position: relative;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .sg-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    position: absolute;
+    top: 0;
+  }
+
+  .positive { color: var(--green); }
+  .slight-pos { color: #7dffb8; }
+  .neutral { color: var(--text); }
+  .slight-neg { color: var(--orange); }
+  .negative { color: var(--red); }
+
+  .tier-badge {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 2px;
+    display: inline-block;
+  }
+  .tier-elite { background: rgba(200,255,0,0.12); color: var(--accent); border: 1px solid rgba(200,255,0,0.3); }
+  .tier-strong { background: rgba(0,200,255,0.1); color: var(--accent2); border: 1px solid rgba(0,200,255,0.25); }
+  .tier-mid { background: rgba(255,136,0,0.1); color: var(--orange); border: 1px solid rgba(255,136,0,0.25); }
+  .tier-weak { background: rgba(255,68,68,0.1); color: var(--red); border: 1px solid rgba(255,68,68,0.25); }
+
+  /* MATCHUP COMPARISON */
+  .matchup-section { margin-bottom: 32px; }
+
+  .matchup-header {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .matchup-inputs {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .matchup-player-input {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    width: 200px;
+    outline: none;
+    list-style: none;
+  }
+  .matchup-player-input:focus { border-color: var(--accent); }
+
+  .vs-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  .matchup-result {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 16px;
+    align-items: start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+  }
+
+  .matchup-player-card { }
+
+  .matchup-player-name {
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+
+  .matchup-vs {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    padding-top: 36px;
+  }
+
+  .sg-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .sg-row:last-child { border-bottom: none; }
+
+  .sg-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .sg-value-big {
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .edge-indicator {
+    font-family: var(--mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-left: 6px;
+  }
+
+  .matchup-verdict {
+    grid-column: 1 / -1;
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--surface2);
+    border-left: 3px solid var(--accent);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .verdict-title {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 8px;
+  }
+
+  /* LIVE STATS TAB */
+  .live-badge {
+    display: inline-block;
+    background: rgba(0,255,136,0.12);
+    color: var(--green);
+    border: 1px solid rgba(0,255,136,0.3);
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  /* SUMMARY CARDS */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px;
+  }
+
+  .summary-card-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 6px;
+  }
+
+  .summary-card-value {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .summary-card-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* COPY BUTTON */
+  .copy-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  .sort-arrow { margin-left: 4px; opacity: 0.5; }
+  .sort-arrow.active { opacity: 1; color: var(--accent); }
+
+  datalist { display: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Matchup Intel <span>// DataGolf SG Engine</span></div>
+  <div class="status-bar">
+    <span class="status-dot" id="statusDot"></span>
+    <span id="statusText" style="color:var(--muted)">NOT CONNECTED</span>
+    <span id="lastUpdate" style="color:var(--muted)"></span>
+  </div>
+</div>
+
+<div class="api-section">
+  <span class="api-label">API Key</span>
+  <input class="api-input" type="password" id="apiKey" placeholder="Enter DataGolf API key..." />
+  <button class="btn btn-primary" id="loadBtn" onclick="loadAll()">Load Data</button>
+  <button class="btn btn-secondary" onclick="loadLiveTournament()">↻ Live Stats</button>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('skill')">Skill Ratings</button>
+  <button class="tab" onclick="switchTab('matchup')">Matchup Compare</button>
+  <button class="tab" onclick="switchTab('live')">Live Tournament <span class="live-badge">Live</span></button>
+  <button class="tab" onclick="switchTab('history')">Course History</button>
+</div>
+
+<div class="controls" id="controls">
+  <div class="control-group">
+    <span class="control-label">Filter</span>
+    <input class="search-input" type="text" id="searchInput" placeholder="Search player..." oninput="filterTable()" />
+  </div>
+  <div class="control-group">
+    <span class="control-label">Show</span>
+    <select id="showCount" onchange="renderSkillTable()">
+      <option value="50">Top 50</option>
+      <option value="100">Top 100</option>
+      <option value="999">All</option>
+    </select>
+  </div>
+  <div style="margin-left:auto; display:flex; gap:8px;">
+    <button class="copy-btn" onclick="copyTableData()">Copy for Claude</button>
+  </div>
+</div>
+
+<div class="main" id="mainContent">
+  <div class="message-box">
+    <div style="font-size:13px; margin-bottom:8px; color: var(--accent); font-weight:700;">READY</div>
+    <div>Enter your DataGolf API key above and click <strong>Load Data</strong> to pull live SG stats for the current PGA Tour field.</div>
+  </div>
+</div>
+
+<script>
+let skillData = [];
+let liveData = [];
+let historyData = {};
+let currentTab = 'skill';
+let sortCol = 'sg_total';
+let sortDir = -1;
+let apiKey = '';
+
+// ── UTILS ──────────────────────────────────────────────────────────────────
+
+function getKey() {
+  return document.getElementById('apiKey').value.trim();
+}
+
+function setStatus(state, text) {
+  const dot = document.getElementById('statusDot');
+  const label = document.getElementById('statusText');
+  dot.className = 'status-dot ' + state;
+  label.textContent = text;
+  label.style.color = state === 'live' ? 'var(--green)' : state === 'error' ? 'var(--red)' : 'var(--muted)';
+}
+
+function setLastUpdate() {
+  const now = new Date();
+  document.getElementById('lastUpdate').textContent = `Updated ${now.toLocaleTimeString()}`;
+}
+
+function sgColor(val) {
+  if (val === null || val === undefined || isNaN(val)) return 'neutral';
+  if (val >= 1.0) return 'positive';
+  if (val >= 0.3) return 'slight-pos';
+  if (val >= -0.3) return 'neutral';
+  if (val >= -1.0) return 'slight-neg';
+  return 'negative';
+}
+
+function sgBar(val, max = 2) {
+  if (val === null || isNaN(val)) return '';
+  const pct = Math.min(Math.abs(val) / max * 100, 100);
+  const color = val >= 0 ? 'var(--green)' : 'var(--red)';
+  const left = val >= 0 ? '50%' : `${50 - pct/2}%`;
+  return `<div class="sg-bar"><div class="sg-bar-fill" style="width:${pct/2}%;left:${val>=0?'50%':`${50-pct/2}%`};background:${color}"></div></div>`;
+}
+
+function fmt(val, dec = 3) {
+  if (val === null || val === undefined || isNaN(val)) return '<span style="color:var(--muted)">—</span>';
+  const sign = val > 0 ? '+' : '';
+  return sign + Number(val).toFixed(dec);
+}
+
+function tierBadge(total) {
+  if (total === null || isNaN(total)) return '';
+  if (total >= 1.5) return '<span class="tier-badge tier-elite">Elite</span>';
+  if (total >= 0.5) return '<span class="tier-badge tier-strong">Strong</span>';
+  if (total >= -0.5) return '<span class="tier-badge tier-mid">Mid</span>';
+  return '<span class="tier-badge tier-weak">Weak</span>';
+}
+
+// ── API CALLS ──────────────────────────────────────────────────────────────
+
+async function loadAll() {
+  const key = getKey();
+  if (!key) { alert('Please enter your DataGolf API key.'); return; }
+  apiKey = key;
+
+  document.getElementById('loadBtn').disabled = true;
+  document.getElementById('loadBtn').textContent = 'Loading...';
+  setStatus('', 'CONNECTING...');
+  showLoading('Pulling skill ratings from DataGolf');
+
+  try {
+    await loadSkillRatings(key);
+    setStatus('live', 'CONNECTED');
+    setLastUpdate();
+    document.getElementById('loadBtn').textContent = '↻ Refresh';
+  } catch(e) {
+    setStatus('error', 'ERROR');
+    showError('Failed to connect: ' + e.message + '. Check your API key.');
+  }
+  document.getElementById('loadBtn').disabled = false;
+}
+
+async function loadSkillRatings(key) {
+  const url = `https://feeds.datagolf.com/preds/skill-ratings?display=value&file_format=json&key=${key}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+
+  // Normalize
+  skillData = (data.players || data || []).map(p => ({
+    name: p.player_name || p.name || '',
+    dg_id: p.dg_id,
+    sg_total: p.sg_total ?? p.total ?? null,
+    sg_ott: p.sg_ott ?? p.ott ?? null,
+    sg_app: p.sg_app ?? p.app ?? null,
+    sg_arg: p.sg_arg ?? p.arg ?? null,
+    sg_putt: p.sg_putt ?? p.putt ?? null,
+    driving_dist: p.driving_dist ?? null,
+    driving_acc: p.driving_acc ?? null,
+  })).filter(p => p.name);
+
+  if (currentTab === 'skill') renderSkillTable();
+}
+
+async function loadLiveTournament() {
+  const key = getKey() || apiKey;
+  if (!key) { alert('Enter API key first.'); return; }
+  showLoading('Pulling live tournament strokes-gained');
+  try {
+    const url = `https://feeds.datagolf.com/preds/live-tournament-stats?stats=sg_putt,sg_arg,sg_app,sg_ott,sg_total&display=value&file_format=json&key=${key}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    liveData = (data.live_stats || data.players || data || []).map(p => ({
+      name: p.player_name || p.name || '',
+      position: p.current_pos ?? p.position ?? '—',
+      score: p.total ?? p.score ?? null,
+      today: p.today ?? null,
+      sg_total: p.sg_total ?? null,
+      sg_ott: p.sg_ott ?? null,
+      sg_app: p.sg_app ?? null,
+      sg_arg: p.sg_arg ?? null,
+      sg_putt: p.sg_putt ?? null,
+      thru: p.thru ?? null,
+    })).filter(p => p.name);
+
+    setStatus('live', 'LIVE DATA LOADED');
+    setLastUpdate();
+    if (currentTab === 'live') renderLiveTable();
+    else { switchTab('live'); }
+  } catch(e) {
+    showError('Live stats error: ' + e.message);
+  }
+}
+
+async function loadMatchupOdds() {
+  const key = getKey() || apiKey;
+  if (!key) return;
+  try {
+    const url = `https://feeds.datagolf.com/betting-tools/matchups?market=round_matchups&odds_format=american&file_format=json&key=${key}`;
+    const res = await fetch(url);
+    if (!res.ok) return;
+    return await res.json();
+  } catch(e) { return null; }
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────────
+
+function showLoading(msg) {
+  document.getElementById('mainContent').innerHTML = `
+    <div class="message-box">
+      <div style="color:var(--accent);font-size:13px;margin-bottom:8px;" class="loading-dots">LOADING</div>
+      <div>${msg}</div>
+    </div>`;
+}
+
+function showError(msg) {
+  document.getElementById('mainContent').innerHTML = `
+    <div class="message-box error">
+      <div style="font-weight:700;margin-bottom:8px;">ERROR</div>
+      <div>${msg}</div>
+    </div>`;
+}
+
+function renderSkillTable() {
+  if (!skillData.length) return;
+
+  const search = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  const limit = parseInt(document.getElementById('showCount')?.value || 50);
+
+  let filtered = skillData.filter(p => !search || p.name.toLowerCase().includes(search));
+
+  // Sort
+  filtered.sort((a, b) => {
+    const av = a[sortCol] ?? -999;
+    const bv = b[sortCol] ?? -999;
+    return sortDir * (bv - av);
+  });
+
+  const displayed = filtered.slice(0, limit);
+
+  const cols = [
+    { key: 'name', label: 'Player', sortable: false },
+    { key: 'sg_total', label: 'SG: Total' },
+    { key: 'sg_app', label: 'SG: App' },
+    { key: 'sg_putt', label: 'SG: Putt' },
+    { key: 'sg_ott', label: 'SG: OTT' },
+    { key: 'sg_arg', label: 'SG: ARG' },
+    { key: null, label: 'Tier', sortable: false },
+  ];
+
+  const thHTML = cols.map(c => {
+    if (c.sortable === false) return `<th>${c.label}</th>`;
+    const isSorted = sortCol === c.key;
+    const arrow = isSorted ? (sortDir === -1 ? ' ▼' : ' ▲') : ' ⇅';
+    return `<th class="${isSorted ? 'sorted' : ''}" onclick="sortBy('${c.key}')">${c.label}<span class="sort-arrow ${isSorted ? 'active' : ''}">${arrow}</span></th>`;
+  }).join('');
+
+  const rowsHTML = displayed.map((p, i) => {
+    const rank = filtered.indexOf(p) + 1;
+    return `<tr>
+      <td>
+        <div class="player-name">${p.name}</div>
+        <div class="player-rank">#${rank} SG:Total</div>
+      </td>
+      <td class="sg-val"><span class="${sgColor(p.sg_total)}">${fmt(p.sg_total)}</span></td>
+      <td class="sg-val"><span class="${sgColor(p.sg_app)}">${fmt(p.sg_app)}</span></td>
+      <td class="sg-val"><span class="${sgColor(p.sg_putt)}">${fmt(p.sg_putt)}</span></td>
+      <td class="sg-val"><span class="${sgColor(p.sg_ott)}">${fmt(p.sg_ott)}</span></td>
+      <td class="sg-val"><span class="${sgColor(p.sg_arg)}">${fmt(p.sg_arg)}</span></td>
+      <td>${tierBadge(p.sg_total)}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('mainContent').innerHTML = `
+    <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);">
+        ${displayed.length} of ${filtered.length} players · Baseline skill ratings (last 2 years, recent-weighted)
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>${thHTML}</tr></thead>
+        <tbody>${rowsHTML}</tbody>
+      </table>
+    </div>`;
+}
+
+function renderLiveTable() {
+  if (!liveData.length) {
+    showError('No live tournament data. Click "Live Stats" to pull current round data.');
+    return;
+  }
+
+  const search = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  let filtered = liveData.filter(p => !search || p.name.toLowerCase().includes(search));
+
+  filtered.sort((a, b) => {
+    const av = a[sortCol] ?? -999;
+    const bv = b[sortCol] ?? -999;
+    return sortDir * (bv - av);
+  });
+
+  const rowsHTML = filtered.map(p => `
+    <tr>
+      <td>
+        <div class="player-name">${p.name}</div>
+        <div class="player-rank">${p.position !== undefined ? 'Pos: ' + p.position : ''} ${p.thru ? '· Thru ' + p.thru : ''}</div>
+      </td>
+      <td class="sg-val" style="color:var(--text)">${p.score !== null ? (p.score > 0 ? '+' : '') + p.score : '—'}</td>
+      <td class="sg-val"><span class="${sgColor(p.sg_total)}">${fmt(p.sg_total)}</span></td>
+      <td class="sg-val"><span class="${sgColor(p.sg_app)}">${fmt(p.sg_app)}</span></td>
+      <td class="sg-val"><span class="${sgColor(p.sg_putt)}">${fmt(p.sg_putt)}</span></td>
+      <td class="sg-val"><span class="${sgColor(p.sg_ott)}">${fmt(p.sg_ott)}</span></td>
+      <td class="sg-val"><span class="${sgColor(p.sg_arg)}">${fmt(p.sg_arg)}</span></td>
+    </tr>`).join('');
+
+  document.getElementById('mainContent').innerHTML = `
+    <div style="margin-bottom:16px;font-family:var(--mono);font-size:11px;color:var(--muted);">
+      Live in-tournament SG · ${filtered.length} players · <span style="color:var(--green)">● LIVE</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Player</th>
+          <th onclick="sortBy('score')" class="${sortCol==='score'?'sorted':''}">Score</th>
+          <th onclick="sortBy('sg_total')" class="${sortCol==='sg_total'?'sorted':''}">SG: Total ⇅</th>
+          <th onclick="sortBy('sg_app')" class="${sortCol==='sg_app'?'sorted':''}">SG: App ⇅</th>
+          <th onclick="sortBy('sg_putt')" class="${sortCol==='sg_putt'?'sorted':''}">SG: Putt ⇅</th>
+          <th onclick="sortBy('sg_ott')" class="${sortCol==='sg_ott'?'sorted':''}">SG: OTT ⇅</th>
+          <th onclick="sortBy('sg_arg')" class="${sortCol==='sg_arg'?'sorted':''}">SG: ARG ⇅</th>
+        </tr></thead>
+        <tbody>${rowsHTML}</tbody>
+      </table>
+    </div>`;
+}
+
+function renderMatchupTab() {
+  document.getElementById('mainContent').innerHTML = `
+    <div class="matchup-section">
+      <div class="matchup-header">Head-to-Head SG Comparison — Enter two player names to compare</div>
+      <div class="matchup-inputs">
+        <input class="matchup-player-input" id="p1Input" placeholder="Player 1 name..." list="playerList" oninput="updateMatchup()" />
+        <span class="vs-label">VS</span>
+        <input class="matchup-player-input" id="p2Input" placeholder="Player 2 name..." list="playerList" oninput="updateMatchup()" />
+        <button class="btn btn-primary" onclick="updateMatchup()">Compare</button>
+      </div>
+      <datalist id="playerList">
+        ${skillData.map(p => `<option value="${p.name}">`).join('')}
+      </datalist>
+      <div id="matchupResult">
+        <div class="message-box">Type two player names above to generate a stat comparison.</div>
+      </div>
+    </div>`;
+}
+
+function updateMatchup() {
+  const p1name = document.getElementById('p1Input')?.value.toLowerCase().trim();
+  const p2name = document.getElementById('p2Input')?.value.toLowerCase().trim();
+  if (!p1name || !p2name) return;
+
+  const dataSource = liveData.length ? liveData : skillData;
+
+  const p1 = dataSource.find(p => p.name.toLowerCase().includes(p1name));
+  const p2 = dataSource.find(p => p.name.toLowerCase().includes(p2name));
+
+  if (!p1 || !p2) {
+    document.getElementById('matchupResult').innerHTML = `
+      <div class="message-box error">Player not found. Try a partial last name (e.g. "bridgeman", "schauffele").</div>`;
+    return;
+  }
+
+  const cats = [
+    { key: 'sg_total', label: 'SG: Total' },
+    { key: 'sg_app', label: 'SG: Approach' },
+    { key: 'sg_putt', label: 'SG: Putting' },
+    { key: 'sg_ott', label: 'SG: Off-Tee' },
+    { key: 'sg_arg', label: 'SG: Around Green' },
+  ];
+
+  let p1edges = 0, p2edges = 0;
+  const catRows1 = cats.map(c => {
+    const v1 = p1[c.key], v2 = p2[c.key];
+    const edge = v1 !== null && v2 !== null && !isNaN(v1) && !isNaN(v2);
+    if (edge && v1 > v2) p1edges++;
+    if (edge && v2 > v1) p2edges++;
+    return `<div class="sg-row">
+      <span class="sg-label">${c.label}</span>
+      <span class="sg-value-big ${sgColor(v1)}">${fmt(v1, 3)}${edge && v1 > v2 ? '<span class="edge-indicator">▲</span>' : ''}</span>
+    </div>`;
+  }).join('');
+
+  const catRows2 = cats.map(c => {
+    const v1 = p1[c.key], v2 = p2[c.key];
+    const edge = v1 !== null && v2 !== null && !isNaN(v1) && !isNaN(v2);
+    return `<div class="sg-row">
+      <span class="sg-label">${c.label}</span>
+      <span class="sg-value-big ${sgColor(v2)}">${fmt(v2, 3)}${edge && v2 > v1 ? '<span class="edge-indicator">▲</span>' : ''}</span>
+    </div>`;
+  }).join('');
+
+  // Verdict
+  const totalDiff = (p1.sg_total ?? 0) - (p2.sg_total ?? 0);
+  const appDiff = (p1.sg_app ?? 0) - (p2.sg_app ?? 0);
+  const puttDiff = (p1.sg_putt ?? 0) - (p2.sg_putt ?? 0);
+  const leader = totalDiff > 0 ? p1.name : p2.name;
+  const margin = Math.abs(totalDiff).toFixed(3);
+
+  const verdictLines = [];
+  verdictLines.push(`SG: Total edge → ${leader} (+${margin} strokes/round baseline)`);
+  if (Math.abs(appDiff) > 0.2) verdictLines.push(`Approach edge → ${appDiff > 0 ? p1.name : p2.name} (${fmt(Math.abs(appDiff))} SG: App)`);
+  if (Math.abs(puttDiff) > 0.2) verdictLines.push(`Putting edge → ${puttDiff > 0 ? p1.name : p2.name} (${fmt(Math.abs(puttDiff))} SG: Putt) — CHECK BERMUDA SPLITS`);
+  if (p1edges === p2edges) verdictLines.push(`Stat categories split evenly (${p1edges}-${p2edges}) — price becomes primary signal`);
+
+  const isLive = liveData.length > 0;
+
+  document.getElementById('matchupResult').innerHTML = `
+    <div class="matchup-result">
+      <div class="matchup-player-card">
+        <div class="matchup-player-name">${p1.name}</div>
+        ${catRows1}
+      </div>
+      <div class="matchup-vs">VS</div>
+      <div class="matchup-player-card">
+        <div class="matchup-player-name">${p2.name}</div>
+        ${catRows2}
+      </div>
+      <div class="matchup-verdict" style="grid-column:1/-1">
+        <div class="verdict-title">${isLive ? '⚡ Live Tournament Stats' : '📊 Baseline Skill Ratings'} — Stat Summary</div>
+        ${verdictLines.map(l => `<div>· ${l}</div>`).join('')}
+        <div style="margin-top:10px;color:var(--muted);font-size:10px;">▲ = edge in this category · Copy this data and paste to Claude for full matchup analysis</div>
+      </div>
+    </div>`;
+}
+
+function renderHistoryTab() {
+  document.getElementById('mainContent').innerHTML = `
+    <div class="message-box">
+      <div style="color:var(--accent);font-weight:700;margin-bottom:8px;">COURSE HISTORY</div>
+      <div style="margin-bottom:16px;">Pull historical Valspar/Innisbrook results for any player.</div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <input class="matchup-player-input" id="histInput" placeholder="Player name..." style="width:220px" />
+        <button class="btn btn-primary" onclick="loadPlayerHistory()">Pull History</button>
+      </div>
+      <div id="histResult" style="margin-top:20px;text-align:left;"></div>
+    </div>`;
+}
+
+async function loadPlayerHistory() {
+  const key = getKey() || apiKey;
+  const name = document.getElementById('histInput')?.value.trim();
+  if (!name || !key) return;
+
+  document.getElementById('histResult').innerHTML = '<div style="color:var(--muted);font-family:var(--mono);font-size:12px;" class="loading-dots">LOADING</div>';
+
+  try {
+    // Pull historical event stats for Valspar (event_id=475 based on DataGolf)
+    const url = `https://feeds.datagolf.com/historical-raw-data/event-list?tour=pga&file_format=json&key=${key}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const events = await res.json();
+
+    // Find Valspar events
+    const valsparEvents = (events || []).filter(e =>
+      (e.event_name || '').toLowerCase().includes('valspar') ||
+      (e.event_name || '').toLowerCase().includes('copperhead') ||
+      (e.event_name || '').toLowerCase().includes('innisbrook')
+    ).slice(0, 6);
+
+    if (!valsparEvents.length) {
+      document.getElementById('histResult').innerHTML = '<div style="color:var(--orange);font-family:var(--mono);font-size:12px;">No Valspar events found in DataGolf historical database.</div>';
+      return;
+    }
+
+    document.getElementById('histResult').innerHTML = `
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:12px;">
+        Found ${valsparEvents.length} Valspar events. Pulling scores for "${name}"...
+      </div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--accent);">
+        ${valsparEvents.map(e => `${e.year}: ${e.event_name}`).join('<br>')}
+      </div>
+      <div style="margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--muted);">
+        Use the event IDs above with the Round Scoring endpoint to pull individual scores.<br>
+        For fastest results: paste the player name + "Valspar results" to Claude alongside this tool.
+      </div>`;
+
+  } catch(e) {
+    document.getElementById('histResult').innerHTML = `<div style="color:var(--red);font-family:var(--mono);font-size:12px;">Error: ${e.message}</div>`;
+  }
+}
+
+// ── INTERACTIONS ───────────────────────────────────────────────────────────
+
+function sortBy(col) {
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = -1; }
+  if (currentTab === 'skill') renderSkillTable();
+  else if (currentTab === 'live') renderLiveTable();
+}
+
+function filterTable() {
+  if (currentTab === 'skill') renderSkillTable();
+  else if (currentTab === 'live') renderLiveTable();
+  else if (currentTab === 'matchup') {
+    const playerList = document.getElementById('playerList');
+    if (playerList) {
+      playerList.innerHTML = skillData.map(p => `<option value="${p.name}">`).join('');
+    }
+  }
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+
+  if (tab === 'skill') renderSkillTable();
+  else if (tab === 'live') renderLiveTable();
+  else if (tab === 'matchup') renderMatchupTab();
+  else if (tab === 'history') renderHistoryTab();
+}
+
+function copyTableData() {
+  const data = currentTab === 'live' ? liveData : skillData;
+  if (!data.length) { alert('No data loaded yet.'); return; }
+
+  const search = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  const filtered = data.filter(p => !search || p.name.toLowerCase().includes(search)).slice(0, 50);
+
+  const lines = ['Player | SG:Total | SG:App | SG:Putt | SG:OTT | SG:ARG'];
+  filtered.forEach(p => {
+    lines.push(`${p.name} | ${fmt(p.sg_total)} | ${fmt(p.sg_app)} | ${fmt(p.sg_putt)} | ${fmt(p.sg_ott)} | ${fmt(p.sg_arg)}`);
+  });
+
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = 'Copy for Claude', 2000);
+  });
+}
+
+// Pre-fill API key if stored
+window.onload = () => {
+  const saved = localStorage.getItem('dg_api_key');
+  if (saved) document.getElementById('apiKey').value = saved;
+};
+
+document.getElementById('apiKey').addEventListener('change', () => {
+  localStorage.setItem('dg_api_key', document.getElementById('apiKey').value.trim());
+});
+</script>
+</body>
+</html>
